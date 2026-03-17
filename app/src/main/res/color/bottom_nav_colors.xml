@@ -1,0 +1,9 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- выбранный пункт -->
+    <item android:color="#FFFFFF" android:state_checked="true"/>
+
+    <!-- обычные пункты -->
+    <item android:color="#6A6A6A"/>
+
+</selector>

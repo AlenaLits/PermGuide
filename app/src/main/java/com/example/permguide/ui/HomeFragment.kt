@@ -1,0 +1,155 @@
+package com.example.permguide.ui
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.widget.ViewPager2
+import com.example.permguide.R
+import com.example.permguide.model.Attraction
+import com.example.permguide.network.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+
+class HomeFragment : Fragment() {
+    private var mediaPlayer: android.media.MediaPlayer? = null
+    private var isPlaying = false
+    private var handler = android.os.Handler(android.os.Looper.getMainLooper())
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_home, container, false)
+
+        val cityDesc = view.findViewById<TextView>(R.id.tvHomeCityDesc)
+        val viewPager = view.findViewById<ViewPager2>(R.id.viewPagerCityPhotos)
+        val dots = view.findViewById<WormDotsIndicator>(R.id.dotsIndicator)
+        val btnPlayAudio = view.findViewById<View>(R.id.btnPlayAudioHome)
+        val playIcon = view.findViewById<ImageView>(R.id.playIconId)
+        val seekBar = view.findViewById<SeekBar>(R.id.audioProgress)
+
+        // Запрос к API для получения данных о городе
+        RetrofitClient.instance.getAttractions().enqueue(object : Callback<List<Attraction>> {
+            override fun onResponse(call: Call<List<Attraction>>, response: Response<List<Attraction>>) {
+                if (isAdded && response.isSuccessful) {
+                    val allPlaces = response.body()
+
+                    // Берём объект с idAttraction = 13
+                    val cityData = allPlaces?.find { it.idAttraction == 13 }
+
+                    // Описание города
+                    cityDesc.text = cityData?.descriptionAttraction
+
+                    // Берём все фото для этой достопримечательности
+                    val cityPhotos = allPlaces
+                        ?.filter { it.idAttraction == 13 }
+                        ?.mapNotNull { it.photo }
+
+                    if (!cityPhotos.isNullOrEmpty()) {
+                        viewPager.adapter = PhotoPagerAdapter(cityPhotos)
+                        dots.attachTo(viewPager)
+                    }
+
+                    // Кнопка аудио
+                    btnPlayAudio.setOnClickListener {
+                        val audioUrl = cityData?.audio
+
+                        if (audioUrl.isNullOrEmpty()) {
+                            Toast.makeText(requireContext(), "Нет аудио", Toast.LENGTH_SHORT).show()
+                            return@setOnClickListener
+                        }
+
+                        if (isPlaying) {
+                            mediaPlayer?.pause()
+                            isPlaying = false
+                            playIcon.setImageResource(R.drawable.ic_play)
+                            return@setOnClickListener
+                        }
+
+                        // если уже есть плеер → продолжаем
+                        mediaPlayer?.let {
+                            it.start()
+                            isPlaying = true
+                            playIcon.setImageResource(R.drawable.ic_pause)
+                            return@setOnClickListener
+                        }
+
+                        // новый плеер
+                        val player = android.media.MediaPlayer()
+                        mediaPlayer = player
+
+                        player.apply {
+                            setDataSource(audioUrl)
+                            prepareAsync()
+
+                            setOnPreparedListener {
+                                start()
+                                this@HomeFragment.isPlaying = true
+                                playIcon.setImageResource(R.drawable.ic_pause)
+
+                                updateProgress(seekBar)
+                            }
+
+                            setOnCompletionListener {
+                                this@HomeFragment.isPlaying = false
+                                playIcon.setImageResource(R.drawable.ic_play)
+                                seekBar.progress = 0
+
+                                release()
+                                mediaPlayer = null
+                            }
+
+                            setOnErrorListener { _, _, _ ->
+                                Toast.makeText(requireContext(), "Ошибка воспроизведения", Toast.LENGTH_SHORT).show()
+                                true
+                            }
+                        }
+                    }
+                    seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                            if (fromUser) {
+                                mediaPlayer?.seekTo(progress)
+                            }
+                        }
+
+                        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                    })
+                }
+            }
+            override fun onFailure(call: Call<List<Attraction>>, t: Throwable) {
+                Toast.makeText(requireContext(), "Ошибка сети: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+        return view
+    }
+
+    private fun updateProgress(seekBar: SeekBar) {
+        mediaPlayer?.let { player ->
+            seekBar.max = player.duration
+
+            handler.post(object : Runnable {
+                override fun run() {
+                    if (player.isPlaying) {
+                        seekBar.progress = player.currentPosition
+                        handler.postDelayed(this, 500)
+                    }
+                }
+            })
+        }
+    }
+    override fun onDestroyView() {
+        handler.removeCallbacksAndMessages(null)
+        mediaPlayer?.release()
+        mediaPlayer = null
+        super.onDestroyView()
+    }
+}
