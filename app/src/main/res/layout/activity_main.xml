@@ -2,15 +2,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="?android:attr/colorBackground">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topAppBar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#121212"
+        android:background="?android:attr/colorBackground"
         app:title="Пермь"
-        app:titleTextColor="#FFFFFF">
+        android:textColor="?attr/colorOnBackground">
 
         <ImageButton
             android:id="@+id/btnSettings"
@@ -20,7 +20,7 @@
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_preferences"
-            app:tint="@color/white" />
+            app:tint="?attr/colorOnBackground" />
 
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -36,15 +36,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#121212"
-
+        android:background="?android:attr/colorBackground"
         app:itemIconTint="@color/bottom_nav_colors"
         app:itemTextColor="@color/bottom_nav_colors"
         app:itemActiveIndicatorStyle="@null"
         app:menu="@menu/bottom_menu" />
-<!--        app:itemActiveIndicatorEnabled="true"-->
-<!--        app:itemActiveIndicatorColor="#2A2A2A"-->
-
-
-
 </RelativeLayout>

@@ -8,6 +8,7 @@ import android.widget.EditText
 import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.example.permguide.R
 import com.example.permguide.utils.SettingsManager
@@ -29,7 +30,7 @@ class SettingsFragment : Fragment() {
 
         val switchNotifications = view.findViewById<Switch>(R.id.switchNotifications)
         val switchOffline = view.findViewById<Switch>(R.id.switchOffline)
-        val switchTheme = view.findViewById<Switch>(R.id.switchTheme)
+        val switchTheme = view.findViewById<SwitchCompat>(R.id.switchTheme)
         val radiusInput = view.findViewById<EditText>(R.id.editRadius)
 
         // 📥 Загрузка сохранённых значений

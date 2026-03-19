@@ -6,9 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.permguide.R
 import com.example.permguide.model.Attraction
-import com.squareup.picasso.Picasso
 
 @Suppress("SpellCheckingInspection")
 class AttractionAdapter(
@@ -39,10 +39,11 @@ class AttractionAdapter(
         val imageUrl = attraction.photo
         // 2. Загружаем её через Picasso
         if (!imageUrl.isNullOrEmpty()) {
-            Picasso.get()
+            Glide.with(holder.itemView)
                 .load(imageUrl)
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .error(android.R.drawable.stat_notify_error)
+                .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
                 .into(holder.image)
         } else {
             // Если ссылки нет, ставим заглушку

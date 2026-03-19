@@ -4,8 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.permguide.R
-import com.squareup.picasso.Picasso
 import android.widget.ImageView
+import com.bumptech.glide.Glide
 
 class PhotoPagerAdapter(private val photos: List<String>) :
     RecyclerView.Adapter<PhotoPagerAdapter.PhotoViewHolder>() {
@@ -19,9 +19,10 @@ class PhotoPagerAdapter(private val photos: List<String>) :
     }
 
     override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
-        Picasso.get()
+        Glide.with(holder.itemView)
             .load(photos[position])
             .placeholder(android.R.drawable.ic_menu_gallery)
+            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
             .into(holder.imageView)
     }
 

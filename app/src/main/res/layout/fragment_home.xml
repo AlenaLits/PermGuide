@@ -3,12 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="?android:attr/colorBackground">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/btnPlayAudioHome"
+        android:layout_above="@id/audioCard"
         android:paddingBottom="16dp">
 
         <LinearLayout
@@ -27,73 +27,106 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="12dp"
-
-                app:dotsColor="#B3FFFFFF"
-                app:selectedDotColor="#FFFFFFFF"
-
+                app:dotsColor="?attr/colorOutline"
+                app:selectedDotColor="?attr/colorOnBackground"
                 app:dotsSize="10dp"
                 app:dotsSpacing="10dp"
                 app:dotsStrokeWidth="1dp"
-                app:dotsStrokeColor="#80FFFFFF"/>
+                app:dotsStrokeColor="?attr/colorOutline"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="12dp"
+                android:layout_margin="16dp"
                 android:text="Добро пожаловать в Пермь!"
-                android:textColor="#FFFFFF"
+                android:textColor="?attr/colorOnBackground"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvHomeCityDesc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="16dp"
                 android:lineSpacingExtra="6dp"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp" />
+                android:textColor="?attr/colorOnBackground"
+                android:textSize="16sp"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <FrameLayout
-        android:id="@+id/btnPlayAudioHome"
+    <!-- 🎧 АУДИО КАРТОЧКА -->
+    <LinearLayout
+        android:id="@+id/audioCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="24dp"
+        android:layout_margin="0dp"
         android:background="@drawable/border_white_button"
-        android:padding="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
+        android:orientation="vertical"
+        android:padding="12dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|top"
-            android:text="Прослушать"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp" />
+        <!-- Верх: текст + кнопка -->
+        <RelativeLayout
+            android:id="@+id/btnPlayAudioHome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/playIconId"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="end|top"
-            android:src="@drawable/ic_play"
-            app:tint="#FFFFFF" />
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Прослушать"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:layout_centerVertical="true"/>
+
+            <ImageView
+                android:id="@+id/playIconId"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_play"
+                app:tint="?attr/colorOnSurface"/>
+        </RelativeLayout>
+
+        <!-- Прогресс -->
         <SeekBar
             android:id="@+id/audioProgress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:progressTint="@android:color/white"
-            android:thumbTint="@android:color/white" />
-    </FrameLayout>
+            android:layout_marginTop="8dp"
+            android:progressTint="?attr/colorOnSurface"
+            android:thumbTint="?attr/colorOnSurface"/>
+
+        <!-- Время -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/textCurrentTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="?attr/colorOnSurface"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/textDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="?attr/colorOnSurface"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </RelativeLayout>

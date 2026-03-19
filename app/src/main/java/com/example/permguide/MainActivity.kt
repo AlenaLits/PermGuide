@@ -21,8 +21,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        com.yandex.mapkit.MapKitFactory.setApiKey("295f9ed3-bae0-49d1-b7d9-2ee24b1f9b09")
-        com.yandex.mapkit.MapKitFactory.initialize(this)
+
 
         setContentView(R.layout.activity_main)
         // Инициализируем кнопку настроек (которую мы добавили в Toolbar)

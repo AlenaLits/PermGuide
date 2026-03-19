@@ -1,6 +1,7 @@
 package com.example.permguide.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +12,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.permguide.R
+import com.example.permguide.data.DataRepository
 import com.example.permguide.model.Attraction
 import com.example.permguide.network.RetrofitClient
+import com.example.permguide.utils.AudioCacheManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -35,125 +38,139 @@ class AttractionDetailFragment : Fragment() {
         val btnPlayAudio = view.findViewById<View>(R.id.btnPlayAudioHome)
         val playIcon = view.findViewById<ImageView>(R.id.playIconId)
         val seekBar = view.findViewById<SeekBar>(R.id.audioProgress)
+        val currentTime = view.findViewById<TextView>(R.id.textCurrentTime)
+        val durationTime = view.findViewById<TextView>(R.id.textDuration)
+        val repo = DataRepository(requireContext().applicationContext)
 
-        RetrofitClient.instance.getAttractions().enqueue(object : Callback<List<Attraction>> {
-            override fun onResponse(call: Call<List<Attraction>>, response: Response<List<Attraction>>) {
-                if (isAdded && response.isSuccessful) {
-                    val allPlaces = response.body() ?: return
+        repo.getAttractions { allPlaces ->
+            if (!isAdded) return@getAttractions
 
-                    // 1. Получаем ID конкретной достопримечательности, на которую нажали
-                    val targetId = arguments?.getInt("id") ?: -1
+                // 1. Получаем ID конкретной достопримечательности, на которую нажали
+            val targetId = arguments?.getInt("id") ?: -1
 
-                    // 2. Ищем ПЕРВЫЙ объект с этим ID, чтобы взять из него название и описание
-                    val mainData = allPlaces.find { it.idAttraction == targetId }
+                // 2. Ищем ПЕРВЫЙ объект с этим ID, чтобы взять из него название и описание
+            val mainData = allPlaces.find { it.idAttraction == targetId }
 
-                    if (mainData != null) {
-                        attrName.text = mainData.nameAttraction
-                        attrDesc.text = mainData.descriptionAttraction
+            if (mainData != null) {
+                attrName.text = mainData.nameAttraction
+                attrDesc.text = mainData.descriptionAttraction
 
-                        // 3. Собираем ВСЕ фотографии для этого ID
-                        // Мы фильтруем список и вытаскиваем только поле photo
-                        val allPhotos = allPlaces
-                            .filter { it.idAttraction == targetId }
-                            .mapNotNull { it.photo }
-                            .filter { it.isNotEmpty() } // Убираем пустые строки, если они есть
+                // 3. Собираем ВСЕ фотографии для этого ID
+                // Мы фильтруем список и вытаскиваем только поле photo
+                val allPhotos = allPlaces
+                    .filter { it.idAttraction == targetId }
+                    .mapNotNull { it.photo }
+                    .filter { it.isNotEmpty() } // Убираем пустые строки, если они есть
 
-                        if (allPhotos.isNotEmpty()) {
-                            viewPager.adapter = PhotoPagerAdapter(allPhotos)
-                            dots.attachTo(viewPager)
+                if (allPhotos.isNotEmpty()) {
+                    viewPager.adapter = PhotoPagerAdapter(allPhotos)
+                    dots.attachTo(viewPager)
+                }
+                btnPlayAudio.setOnClickListener {
+
+                    val audioUrl = mainData.audio
+
+                    if (audioUrl.isNullOrEmpty()) {
+                        Toast.makeText(requireContext(), "Нет аудио", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    if (isPlaying) {
+                        mediaPlayer?.pause()
+                        isPlaying = false
+                        playIcon.setImageResource(R.drawable.ic_play)
+                        return@setOnClickListener
+                    }
+
+                    // если уже есть плеер → продолжаем
+                    mediaPlayer?.let {
+                        it.start()
+                        isPlaying = true
+                        playIcon.setImageResource(R.drawable.ic_pause)
+                        return@setOnClickListener
+                    }
+
+                    // новый плеер
+                    val player = android.media.MediaPlayer()
+                    mediaPlayer = player
+
+                    player.apply {
+                        setDataSource(audioUrl)
+                        prepareAsync()
+
+                        setOnPreparedListener {
+                            start()
+                            this@AttractionDetailFragment.isPlaying = true
+                            playIcon.setImageResource(R.drawable.ic_pause)
+
+                            updateProgress(seekBar, currentTime, durationTime)
                         }
 
-                        btnPlayAudio.setOnClickListener {
+                        setOnCompletionListener {
+                            this@AttractionDetailFragment.isPlaying = false
+                            playIcon.setImageResource(R.drawable.ic_play)
+                            seekBar.progress = 0
+                            currentTime.text = "00:00"
 
-                            val audioUrl = mainData.audio
-
-                            if (audioUrl.isNullOrEmpty()) {
-                                Toast.makeText(requireContext(), "Нет аудио", Toast.LENGTH_SHORT).show()
-                                return@setOnClickListener
-                            }
-
-                            if (isPlaying) {
-                                mediaPlayer?.pause()
-                                isPlaying = false
-                                playIcon.setImageResource(R.drawable.ic_play)
-                                return@setOnClickListener
-                            }
-
-                            // если уже есть плеер → продолжаем
-                            mediaPlayer?.let {
-                                it.start()
-                                isPlaying = true
-                                playIcon.setImageResource(R.drawable.ic_pause)
-                                return@setOnClickListener
-                            }
-
-                            // новый плеер
-                            val player = android.media.MediaPlayer()
-                            mediaPlayer = player
-
-                            player.apply {
-                                setDataSource(audioUrl)
-                                prepareAsync()
-
-                                setOnPreparedListener {
-                                    start()
-                                    this@AttractionDetailFragment.isPlaying = true
-                                    playIcon.setImageResource(R.drawable.ic_pause)
-
-                                    updateProgress(seekBar)
-                                }
-
-                                setOnCompletionListener {
-                                    this@AttractionDetailFragment.isPlaying = false
-                                    playIcon.setImageResource(R.drawable.ic_play)
-                                    seekBar.progress = 0
-
-                                    release()
-                                    mediaPlayer = null
-                                }
-
-                                setOnErrorListener { _, _, _ ->
-                                    Toast.makeText(requireContext(), "Ошибка воспроизведения", Toast.LENGTH_SHORT).show()
-                                    true
-                                }
-                            }
+                            release()
+                            mediaPlayer = null
                         }
-                        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                                if (fromUser) {
-                                    mediaPlayer?.seekTo(progress)
-                                }
-                            }
 
-                            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-                        })
-
-                    } else {
-                        Toast.makeText(requireContext(), "Объект не найден", Toast.LENGTH_SHORT).show()
+                        setOnErrorListener { _, _, _ ->
+                            Toast.makeText(requireContext(), "Ошибка воспроизведения", Toast.LENGTH_SHORT).show()
+                            true
+                        }
                     }
                 }
+
+                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        if (fromUser) {
+                            mediaPlayer?.seekTo(progress)
+                        }
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
+
+            } else {
+                Toast.makeText(requireContext(), "Объект не найден", Toast.LENGTH_SHORT).show()
             }
-            override fun onFailure(call: Call<List<Attraction>>, t: Throwable) {
-                Toast.makeText(requireContext(), "Ошибка сети: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+            if (allPlaces.isEmpty()) {
+                Toast.makeText(requireContext(), "Нет данных (офлайн режим)", Toast.LENGTH_SHORT).show()
+                return@getAttractions
             }
-        })
+        }
         return view
     }
 
-    private fun updateProgress(seekBar: SeekBar) {
+    private fun updateProgress(
+        seekBar: SeekBar,
+        currentTime: TextView,
+        durationTime: TextView
+    ) {
         mediaPlayer?.let { player ->
+
             seekBar.max = player.duration
+            durationTime.text = formatTime(player.duration)
 
             handler.post(object : Runnable {
                 override fun run() {
                     if (player.isPlaying) {
                         seekBar.progress = player.currentPosition
+                        currentTime.text = formatTime(player.currentPosition)
                         handler.postDelayed(this, 500)
                     }
                 }
             })
         }
+    }
+    private fun formatTime(ms: Int): String {
+        val seconds = ms / 1000
+        val minutes = seconds / 60
+        val remainingSeconds = seconds % 60
+        return String.format("%02d:%02d", minutes, remainingSeconds)
     }
     override fun onDestroyView() {
         handler.removeCallbacksAndMessages(null)

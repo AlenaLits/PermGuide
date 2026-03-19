@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.permguide.R
+import com.example.permguide.data.DataRepository
 import com.example.permguide.model.Attraction
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
@@ -26,6 +27,7 @@ import com.yandex.mapkit.user_location.UserLocationObjectListener
 import com.yandex.mapkit.user_location.UserLocationView
 import com.yandex.runtime.image.ImageProvider
 import com.example.permguide.network.RetrofitClient
+import com.example.permguide.utils.AudioCacheManager
 import com.example.permguide.utils.NotificationHelper
 import retrofit2.Call
 import retrofit2.Callback
@@ -54,19 +56,6 @@ class MapFragment : Fragment(), UserLocationObjectListener {
 
             val placemark = mapObject as com.yandex.mapkit.map.PlacemarkMapObject
 
-//            // вернуть старую метку
-//            selectedPlacemark?.setIcon(
-//                ImageProvider.fromBitmap(
-//                    bitmapFromVectorDrawable(R.drawable.map_pin)!!
-//                )
-//            )
-//
-//            // новая зелёная
-//            placemark.setIcon(
-//                ImageProvider.fromBitmap(
-//                    bitmapFromVectorDrawable(R.drawable.map_pin_selected)!!
-//                )
-//            )
 // 1. Проверяем старую метку перед тем, как вернуть ей обычный вид
             selectedPlacemark?.let {
                 if (it.isValid) {
@@ -157,30 +146,18 @@ class MapFragment : Fragment(), UserLocationObjectListener {
         return view
     }
     private fun fetchAttractions() {
-        RetrofitClient.instance.getAttractions().enqueue(object : Callback<List<Attraction>> {
 
-            override fun onResponse(
-                call: Call<List<Attraction>>,
-                response: Response<List<Attraction>>
-            ) {
-                if (response.isSuccessful) {
+        val repo = DataRepository(requireContext())
 
-                    val fullList = response.body() ?: emptyList()
+        repo.getAttractions { fullList ->
 
-                    // убираем город (id = 13), как у тебя в списке
-                    val uniqueAttractions = fullList
-                        .filter { it.idAttraction != 13 }
-                        .distinctBy { it.idAttraction } // Теперь меток не будет по 5 штук в одном месте
+            val unique = fullList
+                .filter { it.idAttraction != 13 }
+                .distinctBy { it.idAttraction }
 
-                    attractionsList = uniqueAttractions
-                    showAttractionsOnMap(uniqueAttractions)
-                }
-            }
-
-            override fun onFailure(call: Call<List<Attraction>>, t: Throwable) {
-                android.widget.Toast.makeText(context, "Ошибка загрузки объектов", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        })
+            attractionsList = unique
+            showAttractionsOnMap(unique)
+        }
     }
     private fun showAttractionsOnMap(attractions: List<Attraction>) {
 
@@ -272,17 +249,20 @@ class MapFragment : Fragment(), UserLocationObjectListener {
         val audio = preview.findViewById<ImageButton>(R.id.btnAudio)
         val close = preview.findViewById<ImageButton>(R.id.btnClose)
         val seekBar = preview.findViewById<SeekBar>(R.id.audioProgress)
+        val currentTime = preview.findViewById<TextView>(R.id.textCurrentTime)
+        val durationTime = preview.findViewById<TextView>(R.id.textDuration)
 
         title.text = attraction.nameAttraction
 
         // загрузка фото через Glide
         Glide.with(this)
             .load(attraction.photo)
+            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
             .into(image)
 
-        audio.setOnClickListener {
 
-            val audioUrl = attraction.audio
+        val audioUrl = attraction.audio
+        audio.setOnClickListener {
 
             if (audioUrl.isNullOrEmpty()) {
                 Toast.makeText(requireContext(), "Нет аудио", Toast.LENGTH_SHORT).show()
@@ -317,13 +297,14 @@ class MapFragment : Fragment(), UserLocationObjectListener {
                     this@MapFragment.isPlaying = true
                     audio.setImageResource(R.drawable.ic_pause)
 
-                    updateProgress(seekBar)
+                    updateProgress(seekBar, currentTime, durationTime)
                 }
 
                 setOnCompletionListener {
                     this@MapFragment.isPlaying = false
                     audio.setImageResource(R.drawable.ic_play)
                     seekBar.progress = 0
+                    currentTime.text = "00:00"
 
                     release()
                     mediaPlayer = null
@@ -386,19 +367,32 @@ class MapFragment : Fragment(), UserLocationObjectListener {
         container.addView(preview)
         container.visibility = View.VISIBLE
     }
-    private fun updateProgress(seekBar: SeekBar) {
+    private fun updateProgress(
+        seekBar: SeekBar,
+        currentTime: TextView,
+        durationTime: TextView
+    ) {
         mediaPlayer?.let { player ->
+
             seekBar.max = player.duration
+            durationTime.text = formatTime(player.duration)
 
             handler.post(object : Runnable {
                 override fun run() {
                     if (player.isPlaying) {
                         seekBar.progress = player.currentPosition
+                        currentTime.text = formatTime(player.currentPosition)
                         handler.postDelayed(this, 500)
                     }
                 }
             })
         }
+    }
+    private fun formatTime(ms: Int): String {
+        val seconds = ms / 1000
+        val minutes = seconds / 60
+        val remainingSeconds = seconds % 60
+        return String.format("%02d:%02d", minutes, remainingSeconds)
     }
     private fun bitmapFromVectorDrawable(drawableId: Int): android.graphics.Bitmap? {
         val drawable = androidx.core.content.ContextCompat.getDrawable(requireContext(), drawableId) ?: return null

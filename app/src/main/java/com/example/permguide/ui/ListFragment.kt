@@ -15,6 +15,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import androidx.appcompat.widget.SearchView
+import com.example.permguide.data.DataRepository
 import com.google.android.material.chip.ChipGroup
 
 class ListFragment : Fragment() {
@@ -132,39 +133,31 @@ class ListFragment : Fragment() {
         adapter?.updateList(filtered)
     }
     private fun fetchAttractions() {
-        RetrofitClient.instance.getAttractions().enqueue(object : Callback<List<Attraction>> {
-            override fun onResponse(call: Call<List<Attraction>>, response: Response<List<Attraction>>) {
-                if (response.isSuccessful) {
-                    val fullList = response.body() ?: emptyList()
 
-                    // 1. Убираем город (ID 13)
-                    // 2. Оставляем только уникальные достопримечательности по их ID
-                    attractionsList = fullList
-                        .filter { it.idAttraction != 13 }
-                        .distinctBy { it.idAttraction } // ВОТ ЭТА СТРОЧКА УБЕРЕТ ДУБЛИ
+        val repo = DataRepository(requireContext())
 
-                    adapter = AttractionAdapter(attractionsList) { attraction ->
-                        val fragment = AttractionDetailFragment()
-                        val bundle = Bundle().apply {
-                            putInt("id", attraction.idAttraction)
-                            putString("name", attraction.nameAttraction)
-                            putString("description", attraction.descriptionAttraction)
-                        }
+        repo.getAttractions { fullList ->
 
-                        fragment.arguments = bundle
+            val unique = fullList
+                .filter { it.idAttraction != 13 }
+                .distinctBy { it.idAttraction }
 
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.container, fragment)
-                            .addToBackStack(null)
-                            .commit()
-                    }
-                    recyclerView.adapter = adapter
+            attractionsList = unique
+
+            adapter = AttractionAdapter(attractionsList) { attraction ->
+                val fragment = AttractionDetailFragment()
+                val bundle = Bundle().apply {
+                    putInt("id", attraction.idAttraction)
                 }
+                fragment.arguments = bundle
+
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.container, fragment)
+                    .addToBackStack(null)
+                    .commit()
             }
 
-            override fun onFailure(call: Call<List<Attraction>>, t: Throwable) {
-                t.printStackTrace()
-            }
-        })
+            recyclerView.adapter = adapter
+        }
     }
 }
