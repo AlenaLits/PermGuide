@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide
 import com.example.permguide.R
 import com.example.permguide.data.DataRepository
 import com.example.permguide.model.Attraction
+import com.example.permguide.utils.NotificationHelper
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
@@ -26,15 +27,10 @@ import com.yandex.mapkit.user_location.UserLocationLayer
 import com.yandex.mapkit.user_location.UserLocationObjectListener
 import com.yandex.mapkit.user_location.UserLocationView
 import com.yandex.runtime.image.ImageProvider
-import com.example.permguide.network.RetrofitClient
-import com.example.permguide.utils.AudioCacheManager
-import com.example.permguide.utils.NotificationHelper
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class MapFragment : Fragment(), UserLocationObjectListener {
     private var _mapView: MapView? = null
+
 
     // 1. Меняем lateinit на обычный nullable, чтобы безопасно проверять его
     private var userLocationLayer: UserLocationLayer? = null
@@ -117,10 +113,28 @@ class MapFragment : Fragment(), UserLocationObjectListener {
             layer.setObjectListener(this)
 
         }
+        val styleJson = """
+        [
+          {
+            "types": ["point"],
+            "tags": { "all": ["poi"] },
+            "stylers": { "visibility": "off" }
+          },
+          {
+            "types": ["point"],
+            "tags": { "all": ["transit"] },
+            "stylers": { "visibility": "off" }
+          }
+        ]
+
+            """.trimIndent()
+
+        _mapView?.map?.setMapStyle(styleJson)
         // Центрирование на Перми при запуске
         _mapView?.map?.move(
             CameraPosition(Point(58.01045, 56.22944), 11.0f, 0.0f, 0.0f)
         )
+
 
         // Кнопка "Мое местоположение"
         view.findViewById<View>(R.id.btn_my_location).setOnClickListener {
