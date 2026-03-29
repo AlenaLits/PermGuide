@@ -124,7 +124,7 @@
 
         android:layout_alignParentBottom="true"
 
-        android:layout_margin="16dp"
+        android:layout_margin="0dp"
 
         android:background="@drawable/border_white_button"
 

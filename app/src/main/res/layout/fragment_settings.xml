@@ -36,7 +36,7 @@
                 android:text="Уведомления"
                 android:textColor="?attr/colorOnBackground"/>
 
-            <Switch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchNotifications"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -90,7 +90,7 @@
                 android:text="Офлайн-режим"
                 android:textColor="?attr/colorOnBackground"/>
 
-            <Switch
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchOffline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -1,5 +1,6 @@
 package com.example.permguide.ui
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +29,7 @@ class ListFragment : Fragment() {
     private var selectedCategoryIds = mutableSetOf<Int>()
 
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -36,9 +38,17 @@ class ListFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        val isDark = resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
         val searchView = view.findViewById<SearchView>(R.id.searchView)
         val searchText = searchView.findViewById<android.widget.EditText>(androidx.appcompat.R.id.search_src_text)
-        searchText.setTextColor(android.graphics.Color.WHITE)
+        //searchText.setTextColor(android.graphics.Color.BLACK)
+        if (isDark) {
+            searchText.setTextColor(android.graphics.Color.WHITE)
+        } else {
+            searchText.setTextColor(android.graphics.Color.BLACK)
+        }
         searchText.setHintTextColor(android.graphics.Color.GRAY)
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {

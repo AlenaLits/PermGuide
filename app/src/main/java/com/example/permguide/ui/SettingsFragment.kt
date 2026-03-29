@@ -28,8 +28,8 @@ class SettingsFragment : Fragment() {
 
         val settings = SettingsManager(requireContext())
 
-        val switchNotifications = view.findViewById<Switch>(R.id.switchNotifications)
-        val switchOffline = view.findViewById<Switch>(R.id.switchOffline)
+        val switchNotifications = view.findViewById<SwitchCompat>(R.id.switchNotifications)
+        val switchOffline = view.findViewById<SwitchCompat>(R.id.switchOffline)
         val switchTheme = view.findViewById<SwitchCompat>(R.id.switchTheme)
         val radiusInput = view.findViewById<EditText>(R.id.editRadius)
 

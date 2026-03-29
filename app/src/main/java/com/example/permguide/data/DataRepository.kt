@@ -18,7 +18,7 @@ class DataRepository(private val context: Context) {
     fun getAttractions(callback: (List<Attraction>) -> Unit) {
 
         if (settings.offlineMode) {
-            // 📵 ОФЛАЙН
+            // ОФЛАЙН
             val cached = cache.loadData()
 
             if (cached != null) {
@@ -29,7 +29,7 @@ class DataRepository(private val context: Context) {
             }
 
         } else {
-            // 🌐 ОНЛАЙН
+            // ОНЛАЙН
             RetrofitClient.instance.getAttractions()
                 .enqueue(object : Callback<List<Attraction>> {
 
